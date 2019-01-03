@@ -13,6 +13,8 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
+//TODOs
+
 app.post('/todos', (req, res) => {
    var todo = new Todo(
        {
@@ -34,8 +36,6 @@ app.get('/todos', (req, res) => {
         res.status(400).send(e);
     });
 });
-
-//GET /todos/123456
 
 app.get('/todos/:id', (req, res) => {
     var id = req.params.id;
@@ -95,6 +95,29 @@ app.patch('/todos/:id', (req, res) => {
             res.send({todo});
         }).catch((err) => res.status(400).send());
 });
+
+//USERS
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    var user = new User(body);
+
+    user.save().then((usr) => {
+        //res.send(usr);
+        return user.generateAuthToken();
+    }).then((token) => {
+        res.header('x-auth', token).send(user);
+    }).catch((e) => {
+        if (e.code === 11000) {
+            return res.status(400).send('Email already exist');
+        }
+        if (e.name === 'ValidationError') {
+            return res.status(400).send(e.message);
+        }
+        res.status(400).send(e)
+    });
+});
+
+
 
 app.listen(port, () => {
     console.log(`Starting on port ${port}`);
