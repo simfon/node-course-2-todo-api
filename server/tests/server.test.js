@@ -204,3 +204,53 @@ describe('GET /users/me', () => {
             .end(done);
     });
 });
+
+describe('POST /user', (done) => {
+    it('should create a user', (done) => {
+        var email = 'example@example.com';
+        var password = '123amb!';
+
+        request(app)
+            .post('/users')
+            .send({email,password})
+            .expect(200)
+            .expect((res) => {
+                expect(res.headers['x-auth']).toExist();
+                expect(res.body._id).toExist();
+                expect(res.body.email).toBe(email);
+            })
+            .end((err) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findOne({email}).then((user) => {
+                    expect(user).toExist();
+                    expect(user.password).toNotBe(password);
+                    done();
+                })
+            });
+    });
+
+    it('should return validation error if request invalid', (done) => {
+        var email = 'nonesisto.com';
+        var password = 'nonesisto';
+
+        request(app)
+            .post('/users')
+            .send({email,password})
+            .expect(400)
+            .end(done);
+    });
+
+    it('should not create user if email in use', (done) => {
+        var email = 'simone@simone.com';
+        var password = '123amb!';
+
+        request(app)
+            .post('/users')
+            .send({email,password})
+            .expect(400)
+            .end(done);
+    });
+})

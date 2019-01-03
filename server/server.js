@@ -122,6 +122,26 @@ app.get('/users/me', authenticate, (req, res) => {
     res.send(req.user);
 });
 
+app.post('/users/login', (req, res) => {
+    var body = _.pick(req.body, ['email','password']);
+
+    User.findByCredentials(body.email, body.password)
+        .then((user) => {
+            if(!user){
+                return res.status(400).send();
+            }
+
+            user.generateAuthToken().then((token) => {
+                res.header('x-auth', token).send(user);
+            });
+            //res.send(user);
+        }).catch((err) => {
+            res.status(400).send();
+        })
+
+    //res.send(body);
+});
+
 app.listen(port, () => {
     console.log(`Starting on port ${port}`);
 })
